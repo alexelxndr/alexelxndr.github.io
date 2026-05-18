@@ -535,8 +535,14 @@
             </div>
             <form id="priceForm" onsubmit="app.savePrice(event)">
                 <div class="form-group">
-                    <label for="priceStore">Store/Pharmacy Name *</label>
-                    <input type="text" id="priceStore" required>
+                    <label for="priceStoreSelect">Store/Pharmacy Name *</label>
+                    <select id="priceStoreSelect" onchange="app.handleStoreSelection()" required>
+                        <option value="">-- Select Pharmacy --</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customStoreGroup" style="display: none;">
+                    <label for="priceStoreCustom">Custom Pharmacy Name *</label>
+                    <input type="text" id="priceStoreCustom" placeholder="Enter pharmacy name">
                 </div>
                 <div class="form-group">
                     <label for="priceAmount">Price *</label>
@@ -561,8 +567,10 @@
     <script>
         const app = {
             data: {
-                medications: []
+                medications: [],
+                customStores: []
             },
+            defaultStores: ['HelpNet', 'Tei', 'MiniFarm', 'Catena', 'DrMax'],
             currentMedicationId: null,
             currentPriceId: null,
             editMode: false,
@@ -571,8 +579,67 @@
             init() {
                 this.loadData();
                 this.render();
+                this.populateStoreDropdown();
                 // Set today's date as default for price date input
                 document.getElementById('priceDate').valueAsDate = new Date();
+            },
+
+            // Populate store dropdown
+            populateStoreDropdown() {
+                const select = document.getElementById('priceStoreSelect');
+                const allStores = [...this.defaultStores, ...this.data.customStores].sort();
+                
+                // Clear existing options except the first one
+                select.innerHTML = '<option value="">-- Select Pharmacy --</option>';
+                
+                // Add all stores
+                allStores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store;
+                    option.textContent = store;
+                    select.appendChild(option);
+                });
+                
+                // Add "Other" option
+                const otherOption = document.createElement('option');
+                otherOption.value = 'OTHER';
+                otherOption.textContent = '➕ Other (Add New)';
+                select.appendChild(otherOption);
+            },
+
+            // Handle store selection
+            handleStoreSelection() {
+                const select = document.getElementById('priceStoreSelect');
+                const customGroup = document.getElementById('customStoreGroup');
+                const customInput = document.getElementById('priceStoreCustom');
+                
+                if (select.value === 'OTHER') {
+                    customGroup.style.display = 'block';
+                    customInput.required = true;
+                    customInput.focus();
+                } else {
+                    customGroup.style.display = 'none';
+                    customInput.required = false;
+                    customInput.value = '';
+                }
+            },
+
+            // Get selected store name
+            getSelectedStore() {
+                const select = document.getElementById('priceStoreSelect');
+                const customInput = document.getElementById('priceStoreCustom');
+                
+                if (select.value === 'OTHER') {
+                    const customStore = customInput.value.trim();
+                    if (customStore && !this.data.customStores.includes(customStore) && !this.defaultStores.includes(customStore)) {
+                        this.data.customStores.push(customStore);
+                        this.saveData();
+                        this.populateStoreDropdown();
+                    }
+                    return customStore;
+                }
+                
+                return select.value;
             },
 
             // Generate UUID
@@ -594,10 +661,16 @@
                 if (stored) {
                     try {
                         this.data = JSON.parse(stored);
+                        // Ensure customStores array exists
+                        if (!this.data.customStores) {
+                            this.data.customStores = [];
+                        }
                     } catch (e) {
                         console.error('Error loading data:', e);
-                        this.data = { medications: [] };
+                        this.data = { medications: [], customStores: [] };
                     }
+                } else {
+                    this.data = { medications: [], customStores: [] };
                 }
             },
 
@@ -625,7 +698,12 @@
                         if (imported.medications && Array.isArray(imported.medications)) {
                             if (confirm('This will replace all current data. Continue?')) {
                                 this.data = imported;
+                                // Ensure customStores array exists
+                                if (!this.data.customStores) {
+                                    this.data.customStores = [];
+                                }
                                 this.saveData();
+                                this.populateStoreDropdown();
                                 this.render();
                                 alert('Data imported successfully!');
                             }
@@ -927,6 +1005,9 @@
                 document.getElementById('priceModalTitle').textContent = 'Add Price';
                 document.getElementById('priceForm').reset();
                 document.getElementById('priceDate').valueAsDate = new Date();
+                this.populateStoreDropdown();
+                document.getElementById('customStoreGroup').style.display = 'none';
+                document.getElementById('priceStoreCustom').required = false;
                 document.getElementById('priceModal').classList.add('active');
             },
 
@@ -939,7 +1020,24 @@
                     const price = med.prices.find(p => p.id === priceId);
                     if (price) {
                         document.getElementById('priceModalTitle').textContent = 'Edit Price';
-                        document.getElementById('priceStore').value = price.store;
+                        this.populateStoreDropdown();
+                        
+                        // Set the store value
+                        const select = document.getElementById('priceStoreSelect');
+                        const storeExists = Array.from(select.options).some(opt => opt.value === price.store);
+                        
+                        if (storeExists) {
+                            select.value = price.store;
+                            document.getElementById('customStoreGroup').style.display = 'none';
+                            document.getElementById('priceStoreCustom').required = false;
+                        } else {
+                            // Store not in list, use OTHER
+                            select.value = 'OTHER';
+                            document.getElementById('customStoreGroup').style.display = 'block';
+                            document.getElementById('priceStoreCustom').value = price.store;
+                            document.getElementById('priceStoreCustom').required = true;
+                        }
+                        
                         document.getElementById('priceAmount').value = price.price;
                         document.getElementById('priceDate').value = price.date;
                         document.getElementById('priceNotes').value = price.notes;
@@ -951,11 +1049,17 @@
             closePriceModal() {
                 document.getElementById('priceModal').classList.remove('active');
                 document.getElementById('priceForm').reset();
+                document.getElementById('customStoreGroup').style.display = 'none';
+                document.getElementById('priceStoreCustom').required = false;
             },
 
             savePrice(event) {
                 event.preventDefault();
-                const store = document.getElementById('priceStore').value.trim();
+                const store = this.getSelectedStore();
+                if (!store) {
+                    alert('Please select or enter a pharmacy name');
+                    return;
+                }
                 const price = document.getElementById('priceAmount').value;
                 const date = document.getElementById('priceDate').value;
                 const notes = document.getElementById('priceNotes').value.trim();
