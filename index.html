@@ -26,11 +26,56 @@
             --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
 
+        /* Dark theme - Modern sleek design */
+        [data-theme="dark"] {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-light: #94a3b8;
+            --border: #334155;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .theme-toggle {
+            background: var(--border);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .theme-toggle:hover {
+            background: var(--text-light);
+            transform: scale(1.05);
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background: #334155;
+            border: 1px solid #475569;
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+            background: #475569;
+            border-color: #64748b;
         }
 
         .container {
@@ -98,6 +143,17 @@
             background: var(--text);
         }
 
+        [data-theme="dark"] .btn-secondary {
+            background: #334155;
+            color: #f1f5f9;
+            border: 1px solid #475569;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: #475569;
+            border-color: #64748b;
+        }
+
         .btn-danger {
             background: var(--danger);
             color: white;
@@ -105,6 +161,15 @@
 
         .btn-danger:hover {
             background: #dc2626;
+        }
+
+        [data-theme="dark"] .btn-danger {
+            background: #991b1b;
+            border: 1px solid #dc2626;
+        }
+
+        [data-theme="dark"] .btn-danger:hover {
+            background: #b91c1c;
         }
 
         .btn-small {
@@ -124,11 +189,26 @@
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.2s;
+            background: var(--card-bg);
+            color: var(--text);
         }
 
         .search-bar input:focus {
             outline: none;
             border-color: var(--primary);
+        }
+
+        [data-theme="dark"] .search-bar input {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        [data-theme="dark"] .search-bar input:focus {
+            border-color: #6366f1;
+        }
+
+        [data-theme="dark"] .search-bar input::placeholder {
+            color: #64748b;
         }
 
         .medications-grid {
@@ -276,7 +356,8 @@
         }
 
         .form-group input,
-        .form-group textarea {
+        .form-group textarea,
+        .form-group select {
             width: 100%;
             padding: 10px 12px;
             border: 2px solid var(--border);
@@ -284,12 +365,35 @@
             font-size: 1rem;
             font-family: inherit;
             transition: border-color 0.2s;
+            background: var(--card-bg);
+            color: var(--text);
         }
 
         .form-group input:focus,
-        .form-group textarea:focus {
+        .form-group textarea:focus,
+        .form-group select:focus {
             outline: none;
             border-color: var(--primary);
+        }
+
+        [data-theme="dark"] .form-group input,
+        [data-theme="dark"] .form-group textarea,
+        [data-theme="dark"] .form-group select {
+            background: #1e293b;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+
+        [data-theme="dark"] .form-group input:focus,
+        [data-theme="dark"] .form-group textarea:focus,
+        [data-theme="dark"] .form-group select:focus {
+            border-color: #6366f1;
+            background: #1e293b;
+        }
+
+        [data-theme="dark"] .form-group input::placeholder,
+        [data-theme="dark"] .form-group textarea::placeholder {
+            color: #64748b;
         }
 
         .form-group textarea {
@@ -360,6 +464,31 @@
         .price-entry.cheapest {
             background: #d1fae5;
             border: 2px solid var(--success);
+        }
+
+        /* Dark theme specific styles */
+        [data-theme="dark"] .price-entry.cheapest {
+            background: #1e3a32;
+            border: 2px solid #22c55e;
+            color: #f1f5f9;
+        }
+
+        [data-theme="dark"] .price-entry.cheapest .price-entry-store,
+        [data-theme="dark"] .price-entry.cheapest .price-entry-date,
+        [data-theme="dark"] .price-entry.cheapest .price-entry-notes {
+            color: #f1f5f9;
+        }
+
+        [data-theme="dark"] .price-entry.cheapest .price-entry-price {
+            color: #22c55e;
+        }
+
+        [data-theme="dark"] .modal {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        [data-theme="dark"] .empty-state {
+            color: var(--text-light);
         }
 
         .price-entry-info {
@@ -475,6 +604,9 @@
         <header>
             <h1>💊 Medication Price Tracker</h1>
             <div class="header-actions">
+                <button class="theme-toggle" onclick="app.toggleTheme()" title="Toggle dark mode">
+                    <span id="themeIcon">🌙</span>
+                </button>
                 <button class="btn btn-primary" onclick="app.showAddMedicationModal()">
                     ➕ Add Medication
                 </button>
@@ -578,10 +710,31 @@
             // Initialize app
             init() {
                 this.loadData();
+                this.loadTheme();
                 this.render();
                 this.populateStoreDropdown();
                 // Set today's date as default for price date input
                 document.getElementById('priceDate').valueAsDate = new Date();
+            },
+
+            // Theme management
+            loadTheme() {
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                this.updateThemeIcon(savedTheme);
+            },
+
+            toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                this.updateThemeIcon(newTheme);
+            },
+
+            updateThemeIcon(theme) {
+                const icon = document.getElementById('themeIcon');
+                icon.textContent = theme === 'dark' ? '☀️' : '🌙';
             },
 
             // Populate store dropdown
