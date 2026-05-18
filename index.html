@@ -585,7 +585,12 @@
 
         .file-input-wrapper input[type=file] {
             position: absolute;
-            left: -9999px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
         }
 
         .cheapest-badge {
@@ -839,7 +844,7 @@
                 URL.revokeObjectURL(url);
             },
 
-            // Import data
+            // Import data with merge
             importData(event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -849,17 +854,7 @@
                     try {
                         const imported = JSON.parse(e.target.result);
                         if (imported.medications && Array.isArray(imported.medications)) {
-                            if (confirm('This will replace all current data. Continue?')) {
-                                this.data = imported;
-                                // Ensure customStores array exists
-                                if (!this.data.customStores) {
-                                    this.data.customStores = [];
-                                }
-                                this.saveData();
-                                this.populateStoreDropdown();
-                                this.render();
-                                alert('Data imported successfully!');
-                            }
+                            this.mergeImportedData(imported);
                         } else {
                             alert('Invalid file format!');
                         }
@@ -869,6 +864,82 @@
                     event.target.value = '';
                 };
                 reader.readAsText(file);
+            },
+
+            // Merge imported data with existing data
+            mergeImportedData(imported) {
+                let addedMeds = 0;
+                let mergedMeds = 0;
+                let addedPrices = 0;
+
+                // Merge custom stores
+                if (imported.customStores && Array.isArray(imported.customStores)) {
+                    imported.customStores.forEach(store => {
+                        if (!this.data.customStores.includes(store) && !this.defaultStores.includes(store)) {
+                            this.data.customStores.push(store);
+                        }
+                    });
+                }
+
+                // Process each imported medication
+                imported.medications.forEach(importedMed => {
+                    // Find existing medication by name (case-insensitive)
+                    const existingMed = this.data.medications.find(
+                        m => m.name.toLowerCase() === importedMed.name.toLowerCase()
+                    );
+
+                    if (existingMed) {
+                        // Medication exists - merge prices
+                        mergedMeds++;
+                        
+                        // Add prices that don't exist (check by store, price, and date)
+                        importedMed.prices.forEach(importedPrice => {
+                            const priceExists = existingMed.prices.some(p =>
+                                p.store === importedPrice.store &&
+                                p.price === importedPrice.price &&
+                                p.date === importedPrice.date
+                            );
+                            
+                            if (!priceExists) {
+                                existingMed.prices.push({
+                                    ...importedPrice,
+                                    id: this.generateId()
+                                });
+                                addedPrices++;
+                            }
+                        });
+                        
+                        existingMed.updatedAt = new Date().toISOString();
+                    } else {
+                        // New medication - add it
+                        this.data.medications.push({
+                            ...importedMed,
+                            id: this.generateId(),
+                            prices: importedMed.prices.map(p => ({
+                                ...p,
+                                id: this.generateId()
+                            }))
+                        });
+                        addedMeds++;
+                        addedPrices += importedMed.prices.length;
+                    }
+                });
+
+                // Ensure customStores array exists
+                if (!this.data.customStores) {
+                    this.data.customStores = [];
+                }
+
+                this.saveData();
+                this.populateStoreDropdown();
+                this.render();
+
+                // Show summary
+                let message = 'Import complete!\n\n';
+                message += `✅ ${addedMeds} new medication(s) added\n`;
+                message += `🔄 ${mergedMeds} medication(s) merged\n`;
+                message += `💰 ${addedPrices} price(s) added`;
+                alert(message);
             },
 
             // Medication CRUD
