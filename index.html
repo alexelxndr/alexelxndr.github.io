@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medication Price Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--card-bg);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--text-light);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--text);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .medications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .medication-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .medication-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .medication-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .medication-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .medication-dosage {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .price-badge {
+            background: var(--success);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .price-info {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        .medication-notes {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .close-btn:hover {
+            background: var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .detail-view {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .detail-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .prices-section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price-entry {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 15px;
+        }
+
+        .price-entry.cheapest {
+            background: #d1fae5;
+            border: 2px solid var(--success);
+        }
+
+        .price-entry-info {
+            flex: 1;
+        }
+
+        .price-entry-store {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .price-entry-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .price-entry.cheapest .price-entry-price {
+            color: var(--success);
+        }
+
+        .price-entry-date {
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .price-entry-notes {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .price-entry-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .back-link:hover {
+            background: var(--border);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .medications-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .detail-title {
+                font-size: 1.5rem;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .cheapest-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💊 Medication Price Tracker</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="app.showAddMedicationModal()">
+                    ➕ Add Medication
+                </button>
+                <button class="btn btn-secondary" onclick="app.exportData()">
+                    📥 Export
+                </button>
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary">📤 Import</button>
+                    <input type="file" id="importFile" accept=".json" onchange="app.importData(event)">
+                </div>
+            </div>
+        </header>
+
+        <div id="mainView">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Search medications..." oninput="app.filterMedications()">
+            </div>
+            <div id="medicationsContainer"></div>
+        </div>
+
+        <div id="detailView" class="hidden"></div>
+    </div>
+
+    <!-- Add/Edit Medication Modal -->
+    <div id="medicationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="medicationModalTitle">Add Medication</h2>
+                <button class="close-btn" onclick="app.closeMedicationModal()">✕</button>
+            </div>
+            <form id="medicationForm" onsubmit="app.saveMedication(event)">
+                <div class="form-group">
+                    <label for="medName">Medication Name *</label>
+                    <input type="text" id="medName" required>
+                </div>
+                <div class="form-group">
+                    <label for="medDosage">Dosage (optional)</label>
+                    <input type="text" id="medDosage" placeholder="e.g., 500mg, 10ml">
+                </div>
+                <div class="form-group">
+                    <label for="medNotes">Notes (optional)</label>
+                    <textarea id="medNotes" placeholder="Any additional information..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeMedicationModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Price Modal -->
+    <div id="priceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="priceModalTitle">Add Price</h2>
+                <button class="close-btn" onclick="app.closePriceModal()">✕</button>
+            </div>
+            <form id="priceForm" onsubmit="app.savePrice(event)">
+                <div class="form-group">
+                    <label for="priceStore">Store/Pharmacy Name *</label>
+                    <input type="text" id="priceStore" required>
+                </div>
+                <div class="form-group">
+                    <label for="priceAmount">Price *</label>
+                    <input type="number" id="priceAmount" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="priceDate">Date *</label>
+                    <input type="date" id="priceDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="priceNotes">Notes (optional)</label>
+                    <textarea id="priceNotes" placeholder="Any additional information..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="app.closePriceModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            data: {
+                medications: []
+            },
+            currentMedicationId: null,
+            currentPriceId: null,
+            editMode: false,
+
+            // Initialize app
+            init() {
+                this.loadData();
+                this.render();
+                // Set today's date as default for price date input
+                document.getElementById('priceDate').valueAsDate = new Date();
+            },
+
+            // Generate UUID
+            generateId() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            },
+
+            // LocalStorage operations
+            saveData() {
+                localStorage.setItem('medicationPriceTracker', JSON.stringify(this.data));
+            },
+
+            loadData() {
+                const stored = localStorage.getItem('medicationPriceTracker');
+                if (stored) {
+                    try {
+                        this.data = JSON.parse(stored);
+                    } catch (e) {
+                        console.error('Error loading data:', e);
+                        this.data = { medications: [] };
+                    }
+                }
+            },
+
+            // Export data
+            exportData() {
+                const dataStr = JSON.stringify(this.data, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `medication-prices-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+            },
+
+            // Import data
+            importData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (imported.medications && Array.isArray(imported.medications)) {
+                            if (confirm('This will replace all current data. Continue?')) {
+                                this.data = imported;
+                                this.saveData();
+                                this.render();
+                                alert('Data imported successfully!');
+                            }
+                        } else {
+                            alert('Invalid file format!');
+                        }
+                    } catch (error) {
+                        alert('Error reading file: ' + error.message);
+                    }
+                    event.target.value = '';
+                };
+                reader.readAsText(file);
+            },
+
+            // Medication CRUD
+            addMedication(name, dosage, notes) {
+                const medication = {
+                    id: this.generateId(),
+                    name,
+                    dosage: dosage || '',
+                    notes: notes || '',
+                    prices: [],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                this.data.medications.push(medication);
+                this.saveData();
+                return medication;
+            },
+
+            updateMedication(id, name, dosage, notes) {
+                const med = this.data.medications.find(m => m.id === id);
+                if (med) {
+                    med.name = name;
+                    med.dosage = dosage || '';
+                    med.notes = notes || '';
+                    med.updatedAt = new Date().toISOString();
+                    this.saveData();
+                }
+            },
+
+            deleteMedication(id) {
+                if (confirm('Are you sure you want to delete this medication and all its prices?')) {
+                    this.data.medications = this.data.medications.filter(m => m.id !== id);
+                    this.saveData();
+                    this.showMainView();
+                }
+            },
+
+            getMedication(id) {
+                return this.data.medications.find(m => m.id === id);
+            },
+
+            // Price CRUD
+            addPrice(medicationId, store, price, date, notes) {
+                const med = this.getMedication(medicationId);
+                if (med) {
+                    const priceEntry = {
+                        id: this.generateId(),
+                        store,
+                        price: parseFloat(price),
+                        date,
+                        notes: notes || '',
+                        createdAt: new Date().toISOString()
+                    };
+                    med.prices.push(priceEntry);
+                    med.updatedAt = new Date().toISOString();
+                    this.saveData();
+                }
+            },
+
+            updatePrice(medicationId, priceId, store, price, date, notes) {
+                const med = this.getMedication(medicationId);
+                if (med) {
+                    const priceEntry = med.prices.find(p => p.id === priceId);
+                    if (priceEntry) {
+                        priceEntry.store = store;
+                        priceEntry.price = parseFloat(price);
+                        priceEntry.date = date;
+                        priceEntry.notes = notes || '';
+                        med.updatedAt = new Date().toISOString();
+                        this.saveData();
+                    }
+                }
+            },
+
+            deletePrice(medicationId, priceId) {
+                if (confirm('Are you sure you want to delete this price entry?')) {
+                    const med = this.getMedication(medicationId);
+                    if (med) {
+                        med.prices = med.prices.filter(p => p.id !== priceId);
+                        med.updatedAt = new Date().toISOString();
+                        this.saveData();
+                        this.showDetailView(medicationId);
+                    }
+                }
+            },
+
+            // Get cheapest price for a medication
+            getCheapestPrice(medication) {
+                if (!medication.prices || medication.prices.length === 0) return null;
+                return medication.prices.reduce((min, p) => p.price < min.price ? p : min);
+            },
+
+            // Render functions
+            render() {
+                this.renderMedicationsList();
+            },
+
+            renderMedicationsList() {
+                const container = document.getElementById('medicationsContainer');
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                
+                let medications = this.data.medications.filter(med => 
+                    med.name.toLowerCase().includes(searchTerm) ||
+                    (med.dosage && med.dosage.toLowerCase().includes(searchTerm))
+                );
+
+                if (medications.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💊</div>
+                            <h2>No medications yet</h2>
+                            <p>Click "Add Medication" to get started</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Sort by cheapest price
+                medications.sort((a, b) => {
+                    const priceA = this.getCheapestPrice(a);
+                    const priceB = this.getCheapestPrice(b);
+                    if (!priceA) return 1;
+                    if (!priceB) return -1;
+                    return priceA.price - priceB.price;
+                });
+
+                container.innerHTML = `
+                    <div class="medications-grid">
+                        ${medications.map(med => this.renderMedicationCard(med)).join('')}
+                    </div>
+                `;
+            },
+
+            renderMedicationCard(medication) {
+                const cheapest = this.getCheapestPrice(medication);
+                const priceDisplay = cheapest 
+                    ? `
+                        <div class="price-badge">$${cheapest.price.toFixed(2)}</div>
+                        <div class="price-info">at ${cheapest.store}</div>
+                    `
+                    : '<div class="price-info">No prices yet</div>';
+
+                return `
+                    <div class="medication-card" onclick="app.showDetailView('${medication.id}')">
+                        <div class="medication-header">
+                            <div>
+                                <div class="medication-name">${this.escapeHtml(medication.name)}</div>
+                                ${medication.dosage ? `<div class="medication-dosage">${this.escapeHtml(medication.dosage)}</div>` : ''}
+                            </div>
+                            ${priceDisplay}
+                        </div>
+                        ${medication.notes ? `<div class="medication-notes">${this.escapeHtml(medication.notes)}</div>` : ''}
+                    </div>
+                `;
+            },
+
+            renderDetailView(medicationId) {
+                const med = this.getMedication(medicationId);
+                if (!med) return;
+
+                const cheapest = this.getCheapestPrice(med);
+                const detailView = document.getElementById('detailView');
+
+                detailView.innerHTML = `
+                    <a href="#" class="back-link" onclick="app.showMainView(); return false;">← Back to list</a>
+                    <div class="detail-view">
+                        <div class="detail-header">
+                            <div>
+                                <div class="detail-title">${this.escapeHtml(med.name)}</div>
+                                ${med.dosage ? `<div class="medication-dosage">${this.escapeHtml(med.dosage)}</div>` : ''}
+                                ${med.notes ? `<div class="medication-notes" style="margin-top: 10px;">${this.escapeHtml(med.notes)}</div>` : ''}
+                            </div>
+                            <div class="detail-actions">
+                                <button class="btn btn-primary btn-small" onclick="app.showEditMedicationModal('${med.id}')">
+                                    ✏️ Edit
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="app.deleteMedication('${med.id}')">
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="prices-section">
+                            <div class="section-title">
+                                <span>Price History (${med.prices.length})</span>
+                                <button class="btn btn-primary btn-small" onclick="app.showAddPriceModal('${med.id}')">
+                                    ➕ Add Price
+                                </button>
+                            </div>
+                            ${med.prices.length === 0 
+                                ? '<p style="color: var(--text-light); text-align: center; padding: 20px;">No prices recorded yet</p>'
+                                : med.prices
+                                    .sort((a, b) => a.price - b.price)
+                                    .map(price => this.renderPriceEntry(med.id, price, cheapest && price.id === cheapest.id))
+                                    .join('')
+                            }
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderPriceEntry(medicationId, price, isCheapest) {
+                return `
+                    <div class="price-entry ${isCheapest ? 'cheapest' : ''}">
+                        <div class="price-entry-info">
+                            <div class="price-entry-store">
+                                ${this.escapeHtml(price.store)}
+                                ${isCheapest ? '<span class="cheapest-badge">CHEAPEST</span>' : ''}
+                            </div>
+                            <div class="price-entry-price">$${price.price.toFixed(2)}</div>
+                            <div class="price-entry-date">📅 ${this.formatDate(price.date)}</div>
+                            ${price.notes ? `<div class="price-entry-notes">${this.escapeHtml(price.notes)}</div>` : ''}
+                        </div>
+                        <div class="price-entry-actions">
+                            <button class="btn btn-secondary btn-small" onclick="app.showEditPriceModal('${medicationId}', '${price.id}')">
+                                ✏️
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="app.deletePrice('${medicationId}', '${price.id}')">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // View management
+            showMainView() {
+                document.getElementById('mainView').classList.remove('hidden');
+                document.getElementById('detailView').classList.add('hidden');
+                this.render();
+            },
+
+            showDetailView(medicationId) {
+                document.getElementById('mainView').classList.add('hidden');
+                document.getElementById('detailView').classList.remove('hidden');
+                this.renderDetailView(medicationId);
+            },
+
+            // Modal management
+            showAddMedicationModal() {
+                this.editMode = false;
+                this.currentMedicationId = null;
+                document.getElementById('medicationModalTitle').textContent = 'Add Medication';
+                document.getElementById('medicationForm').reset();
+                document.getElementById('medicationModal').classList.add('active');
+            },
+
+            showEditMedicationModal(id) {
+                this.editMode = true;
+                this.currentMedicationId = id;
+                const med = this.getMedication(id);
+                if (med) {
+                    document.getElementById('medicationModalTitle').textContent = 'Edit Medication';
+                    document.getElementById('medName').value = med.name;
+                    document.getElementById('medDosage').value = med.dosage;
+                    document.getElementById('medNotes').value = med.notes;
+                    document.getElementById('medicationModal').classList.add('active');
+                }
+            },
+
+            closeMedicationModal() {
+                document.getElementById('medicationModal').classList.remove('active');
+                document.getElementById('medicationForm').reset();
+            },
+
+            saveMedication(event) {
+                event.preventDefault();
+                const name = document.getElementById('medName').value.trim();
+                const dosage = document.getElementById('medDosage').value.trim();
+                const notes = document.getElementById('medNotes').value.trim();
+
+                if (this.editMode && this.currentMedicationId) {
+                    this.updateMedication(this.currentMedicationId, name, dosage, notes);
+                    this.showDetailView(this.currentMedicationId);
+                } else {
+                    this.addMedication(name, dosage, notes);
+                    this.showMainView();
+                }
+
+                this.closeMedicationModal();
+            },
+
+            showAddPriceModal(medicationId) {
+                this.editMode = false;
+                this.currentMedicationId = medicationId;
+                this.currentPriceId = null;
+                document.getElementById('priceModalTitle').textContent = 'Add Price';
+                document.getElementById('priceForm').reset();
+                document.getElementById('priceDate').valueAsDate = new Date();
+                document.getElementById('priceModal').classList.add('active');
+            },
+
+            showEditPriceModal(medicationId, priceId) {
+                this.editMode = true;
+                this.currentMedicationId = medicationId;
+                this.currentPriceId = priceId;
+                const med = this.getMedication(medicationId);
+                if (med) {
+                    const price = med.prices.find(p => p.id === priceId);
+                    if (price) {
+                        document.getElementById('priceModalTitle').textContent = 'Edit Price';
+                        document.getElementById('priceStore').value = price.store;
+                        document.getElementById('priceAmount').value = price.price;
+                        document.getElementById('priceDate').value = price.date;
+                        document.getElementById('priceNotes').value = price.notes;
+                        document.getElementById('priceModal').classList.add('active');
+                    }
+                }
+            },
+
+            closePriceModal() {
+                document.getElementById('priceModal').classList.remove('active');
+                document.getElementById('priceForm').reset();
+            },
+
+            savePrice(event) {
+                event.preventDefault();
+                const store = document.getElementById('priceStore').value.trim();
+                const price = document.getElementById('priceAmount').value;
+                const date = document.getElementById('priceDate').value;
+                const notes = document.getElementById('priceNotes').value.trim();
+
+                if (this.editMode && this.currentPriceId) {
+                    this.updatePrice(this.currentMedicationId, this.currentPriceId, store, price, date, notes);
+                } else {
+                    this.addPrice(this.currentMedicationId, store, price, date, notes);
+                }
+
+                this.showDetailView(this.currentMedicationId);
+                this.closePriceModal();
+            },
+
+            // Filter medications
+            filterMedications() {
+                this.renderMedicationsList();
+            },
+
+            // Utility functions
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            },
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        };
+
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
