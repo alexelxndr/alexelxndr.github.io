@@ -1,6 +1,6 @@
 # 💊 Medication Price Tracker
 
-A simple, portable web application for tracking medication prices across different pharmacies and stores.
+This is a simple, portable web application for tracking medication prices across different pharmacies and stores.
 
 ## Features
 
